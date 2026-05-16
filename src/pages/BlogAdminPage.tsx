@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
 import { motion } from 'motion/react';
-import { fileToBase64 } from '../lib/utils';
+import { fileToBase64, formatDate } from '../lib/utils';
 import { 
   Plus, Search, Save, Globe, Eye, FileText, Image, User, Tag, 
   ChevronLeft, Bold, Italic, List, Link as LinkIcon, Heading1, Heading2, 
@@ -313,7 +313,7 @@ export default function BlogAdminPage() {
                         {post.status === 'published' ? <CheckCircle2 size={10} /> : <Circle size={10} />}
                         {post.status}
                      </span>
-                     <span className="text-[9px] text-white/20 font-mono">{new Date(post.createdAt).toLocaleDateString()}</span>
+                     <span className="text-[9px] text-white/20 font-mono">{formatDate(post.createdAt)}</span>
                   </div>
                   <h3 className={`text-sm font-bold mb-2 line-clamp-1 ${selectedPost?.id === post.id ? 'text-maha-yellow' : 'text-white'}`}>{post.title}</h3>
                   <p className="text-[10px] text-white/30 line-clamp-2">{post.excerpt}</p>

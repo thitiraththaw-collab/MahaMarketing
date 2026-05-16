@@ -4,26 +4,52 @@ import { blogService, BlogPost } from '../services/blogService';
 import { motion, useScroll, useSpring } from 'motion/react';
 import { Share2, Facebook, Twitter, Link as LinkIcon, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { formatDate } from '../lib/utils';
 
 export default function BlogPostPage() {
   const { id } = useParams();
   const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
+  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+
   useEffect(() => {
     const fetchPost = async () => {
       if (id) {
-        const found = await blogService.getPostById(id);
-        if (found) setPost(found);
+        setLoading(true);
+        try {
+          const found = await blogService.getPostById(id);
+          if (found) {
+            setPost(found);
+            // Fetch related posts after getting the current post
+            const allPosts = await blogService.getPosts();
+            setRelatedPosts(allPosts.filter(p => p.id !== id && p.status === 'published').slice(0, 3));
+          }
+        } catch (error) {
+          console.error('Fetch post failed:', error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
     fetchPost();
     window.scrollTo(0, 0);
   }, [id]);
 
-  if (!post) return <div className="min-h-screen pt-40 text-center bg-bg text-text">Article not found.</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="text-accent font-display animate-pulse text-2xl tracking-[0.5em] italic">ARTICLE LOADING</div>
+      </div>
+    );
+  }
+
+  if (!post) return <div className="min-h-screen pt-40 text-center bg-bg text-text font-thai">ไม่พบบทความที่คุณต้องการ</div>;
+
+  const currentTags = post.tags || [];
 
   return (
     <div className="bg-bg text-text min-h-screen pb-32 transition-colors duration-500">
@@ -42,7 +68,7 @@ export default function BlogPostPage() {
                  <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Blog
               </Link>
               <div className="bg-maha-pink text-white text-[10px] px-4 py-1.5 rounded-full font-black uppercase w-fit mb-6 tracking-widest">{post.category}</div>
-              <h1 className="text-5xl md:text-7xl font-display leading-[0.9] text-white uppercase italic drop-shadow-2xl">{post.title}</h1>
+              <h1 className="text-5xl md:text-7xl font-display leading-[0.9] text-white uppercase italic drop-shadow-2xl">{post.title || 'Untitled'}</h1>
            </div>
         </header>
 
@@ -53,28 +79,28 @@ export default function BlogPostPage() {
                     {post.authorImageUrl ? (
                       <img src={post.authorImageUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="uppercase">{post.author[0]}</span>
+                      <span className="uppercase">{post.author ? post.author[0] : 'M'}</span>
                     )}
                  </div>
                  <div>
                     <div className="uppercase tracking-widest text-[10px] text-text/30 mb-1 font-bold">Written by</div>
-                    <div className="text-2xl font-display text-text">{post.author}</div>
+                    <div className="text-2xl font-display text-text">{post.author || 'MAHA Team'}</div>
                  </div>
                  <div className="ml-auto text-right">
                     <div className="uppercase tracking-widest text-[10px] text-text/30 mb-1 font-bold">Published</div>
-                    <div className="text-sm font-thai text-text/60">{new Date(post.createdAt).toLocaleDateString('th-TH', { dateStyle: 'long' })}</div>
+                    <div className="text-sm font-thai text-text/60">{formatDate(post.createdAt)}</div>
                  </div>
               </div>
 
               {/* CONTENT AREA */}
               <div 
                 className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-maha font-thai max-w-none text-text/70 leading-relaxed text-lg transition-colors duration-500`}
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                dangerouslySetInnerHTML={{ __html: post.content || '' }}
               />
 
               {/* TAGS */}
               <div className="flex flex-wrap gap-2 pt-12 border-t border-border">
-                 {post.tags.map(tag => (
+                 {currentTags.map(tag => (
                    <span key={tag} className="px-5 py-2 bg-surface border border-border rounded-full text-[10px] uppercase font-black tracking-widest text-text/40 hover:text-accent hover:border-accent transition-all cursor-default">
                      #{tag}
                    </span>
@@ -117,7 +143,7 @@ export default function BlogPostPage() {
          <div className="max-w-7xl mx-auto">
             <h2 className="text-5xl font-display mb-16 text-text italic uppercase tracking-tighter">Related <span className="text-accent">Articles</span></h2>
             <div className="grid md:grid-cols-3 gap-12">
-               {blogService.getPosts().filter(p => p.id !== post.id).slice(0, 3).map(p => (
+               {relatedPosts.map(p => (
                  <Link key={p.id} to={`/blog/${p.id}`} className="group block space-y-6">
                     <div className="aspect-[16/10] rounded-[2rem] overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 shadow-xl">
                        <img src={p.coverUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />

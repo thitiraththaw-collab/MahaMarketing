@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
 import { motion } from 'motion/react';
 import { Search, ChevronRight } from 'lucide-react';
+import { formatDate } from '../lib/utils';
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -77,7 +78,7 @@ export default function BlogPage() {
                    <div className="absolute top-6 left-6 bg-maha-pink text-white text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-widest">{post.category}</div>
                 </Link>
                 <div className={`${idx === 0 && filter === 'All' && !search ? 'md:w-1/2 flex flex-col justify-center' : ''}`}>
-                   <div className="text-text/30 text-[10px] uppercase tracking-widest mb-4 font-bold">{new Date(post.createdAt).toLocaleDateString('th-TH')} • BY {post.author}</div>
+                   <div className="text-text/30 text-[10px] uppercase tracking-widest mb-4 font-bold">{formatDate(post.createdAt)} • BY {post.author}</div>
                    <h2 className={`font-display mb-4 leading-tight group-hover:text-accent transition-colors line-clamp-2 text-text ${idx === 0 && filter === 'All' && !search ? 'text-5xl' : 'text-3xl'}`}>
                      <Link to={`/blog/${post.id}`}>{post.title}</Link>
                    </h2>
