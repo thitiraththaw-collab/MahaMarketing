@@ -52,15 +52,21 @@ export default function BlogAdminPage() {
     if (!selectedPost) return;
     setSaveStatus('saving');
     
-    const updatedPost = { ...selectedPost };
-    if (editorRef.current) {
-       updatedPost.content = editorRef.current.innerHTML;
+    try {
+      const updatedPost = { ...selectedPost };
+      if (editorRef.current) {
+         updatedPost.content = editorRef.current.innerHTML;
+      }
+      
+      await blogService.savePost(updatedPost);
+      const list = await blogService.getPosts(true);
+      setPosts(list);
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Save failed:', error);
+      setSaveStatus('idle');
+      // Already handled in handleFirestoreError which rethrows
     }
-    
-    await blogService.savePost(updatedPost);
-    const list = await blogService.getPosts(true);
-    setPosts(list);
-    setTimeout(() => setSaveStatus('saved'), 500);
     setTimeout(() => setSaveStatus('idle'), 2000);
   };
 

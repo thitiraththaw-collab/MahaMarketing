@@ -17,9 +17,9 @@ service cloud.firestore {
 
     // Validation Blueprint for Blog Post
     function isValidBlogPost(data) {
-      return data.title is string && data.title.size() <= 200 &&
-             data.slug is string && data.slug.size() <= 200 &&
-             data.content is string && data.content.size() <= 50000 &&
+      return data.title is string && 
+             data.slug is string && 
+             data.content is string && 
              data.status in ['draft', 'published'];
     }
 
@@ -43,8 +43,8 @@ service cloud.firestore {
 
     // -- BLOG POSTS --
     match /posts/{postId} {
-      allow get: if (existing().status == 'published' || isAdmin()) && isValidId(postId);
-      allow list: if resource.data.status == 'published' || isAdmin();
+      allow get: if (isAdmin() || (resource != null && resource.data.status == 'published')) && isValidId(postId);
+      allow list: if isAdmin() || (resource.data.status == 'published');
       allow create: if isAdmin() && isValidBlogPost(incoming());
       allow update: if isAdmin() && isValidBlogPost(incoming());
       allow delete: if isAdmin();
