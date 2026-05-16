@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // -- HELPERS --
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        request.auth.token.email == 'thitirath.thaw@gmail.com' && 
+        request.auth.token.email_verified == true
+      ); 
+    }
+    
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // -- DEFAULT DENY --
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -- SITE CONTENT --
+    match /site/content {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // -- BLOG POSTS --
+    match /posts/{postId} {
+      allow get: if existing().status == 'published' || isAdmin();
+      allow list: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // -- LEADS --
+    match /leads/{leadId} {
+      allow create: if true; // Open submission
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

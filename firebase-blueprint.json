@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "SiteContent": {
+      "title": "Site Content",
+      "description": "The entire content structure for the MAHA Marketings website.",
+      "type": "object",
+      "properties": {
+        "hero": { "type": "object" },
+        "about": { "type": "object" },
+        "services": { "type": "array" },
+        "packages": { "type": "array" },
+        "artworkRateCard": { "type": "array" },
+        "brandBuilding": { "type": "array" },
+        "addons": { "type": "array" },
+        "portfolio": { "type": "array" },
+        "team": { "type": "array" },
+        "process": { "type": "array" },
+        "results": { "type": "object" },
+        "loyalty": { "type": "object" },
+        "contact": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "BlogPost": {
+      "title": "Blog Post",
+      "description": "An article published on the MAHA blog.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array" },
+        "author": { "type": "string" },
+        "authorImageUrl": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "slug": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "seoTitle": { "type": "string" },
+        "metaDescription": { "type": "string" },
+        "primaryKeyword": { "type": "string" },
+        "secondaryKeywords": { "type": "string" },
+        "hashtags": { "type": "string" }
+      },
+      "required": ["title", "slug", "content", "status"]
+    },
+    "Lead": {
+      "title": "Marketing Lead",
+      "description": "Information from a lead contact form or price calculator.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "message": { "type": "string" },
+        "source": { "type": "string" },
+        "details": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/site/content": {
+      "schema": "SiteContent",
+      "description": "Singleton document containing the main site content."
+    },
+    "/posts/{postId}": {
+      "schema": "BlogPost",
+      "description": "Collection of blog articles."
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Collection of incoming business leads."
+    }
+  }
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAHA Marketings - Setup Guide</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; mx-auto: auto; padding: 40px; }
+        h1 { color: #0A0A0A; border-bottom: 4px solid #FFFF00; padding-bottom: 10px; }
+        h2 { color: #FF0062; margin-top: 40px; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+        .step { background: #fafafa; border-left: 4px solid #FFFF00; padding: 20px; margin: 20px 0; }
+        pre { background: #222; color: #fff; padding: 20px; border-radius: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>MAHA Marketings - การตั้งค่าระบบ</h1>
+    
+    <h2>1. การตั้งค่า Contact Form (Google Sheets)</h2>
+    <div class="step">
+        <ol>
+            <li>สร้าง Google Sheet ใหม่</li>
+            <li>ไปที่ <b>Extensions > Apps Script</b></li>
+            <li>คัดลอกโค้ดนี้ลงไปใน `Code.gs`:</li>
+        </ol>
+        <pre>
+const EMAIL_TO = "your-email@gmail.com";
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const timestamp = new Date();
+    
+    sheet.appendRow([
+      timestamp, data.name, data.company, data.phone, 
+      data.line, data.email, data.services, 
+      data.total, data.message
+    ]);
+    
+    GmailApp.sendEmail(EMAIL_TO, "MAHA: New Lead from " + data.name, 
+      "รายละเอียดลูกค้า:\n" + JSON.stringify(data, null, 2));
+    
+    return ContentService.createTextOutput(JSON.stringify({"result": "success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({"result": "error", "error": err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+        </pre>
+        <ol start="4">
+            <li>กด <b>Deploy > New Deployment</b> เลือกประเภทเป็น <b>Web App</b></li>
+            <li>ตั้งค่า "Who has access" เป็น <b>Anyone</b></li>
+            <li>คัดลอก Web App URL ไปใส่ใน <code>index.html</code> (หรือผ่าน Admin Panel)</li>
+        </ol>
+    </div>
+
+    <h2>2. วิธี Deploy เว็บไซต์</h2>
+    <div class="step">
+        <p>ใช้ <b>Netlify Drop</b> เพื่อให้เว็บไซต์ออนไลน์ได้ใน 1 นาที:</p>
+        <ol>
+            <li>Export ไฟล์จากหน้า <b>/admin</b></li>
+            <li>รวมไฟล์ทั้งหมด (index.html, blog.html, images/) ไว้ในโฟลเดอร์เดียวกัน</li>
+            <li>ลากโฟลเดอร์ไปวางที่ <a href="https://app.netlify.com/drop" target="_blank">netlify.com/drop</a></li>
+            <li>ได้ URL พร้อมใช้งานทันที!</li>
+        </ol>
+    </div>
+</body>
+</html>
