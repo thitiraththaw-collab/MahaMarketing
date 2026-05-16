@@ -72,7 +72,7 @@ export default function BlogAdminPage() {
       setPosts(list);
       setSelectedPost(list.length > 0 ? list[0] : null);
     } catch (error) {
-      console.error('Delete failed:', error);
+       // Already handled in service
     }
   };
 

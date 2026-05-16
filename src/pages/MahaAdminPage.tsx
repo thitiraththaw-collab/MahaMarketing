@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fileToBase64 } from '../lib/utils';
-import { db } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface Props {
@@ -24,6 +24,7 @@ export default function MahaAdminPage({ content, setContent }: Props) {
 
   const handleSave = async () => {
     setSaveStatus('saving');
+    const path = 'site/content';
     try {
       await setDoc(doc(db, 'site', 'content'), {
         ...localContent,
@@ -32,9 +33,8 @@ export default function MahaAdminPage({ content, setContent }: Props) {
       setContent(localContent);
       setSaveStatus('saved');
     } catch (error) {
-      console.error('Save failed:', error);
       setSaveStatus('idle');
-      alert('Save failed. Please check permissions.');
+      handleFirestoreError(error, OperationType.WRITE, path);
     }
     setTimeout(() => setSaveStatus('idle'), 2000);
   };

@@ -15,6 +15,21 @@ service cloud.firestore {
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
 
+    // Validation Blueprint for Blog Post
+    function isValidBlogPost(data) {
+      return data.title is string && data.title.size() <= 200 &&
+             data.slug is string && data.slug.size() <= 200 &&
+             data.content is string && data.content.size() <= 50000 &&
+             data.status in ['draft', 'published'];
+    }
+
+    // Validation Blueprint for Lead
+    function isValidLead(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.message is string && data.message.size() <= 2000;
+    }
+
     // -- DEFAULT DENY --
     match /{document=**} {
       allow read, write: if false;
@@ -28,14 +43,16 @@ service cloud.firestore {
 
     // -- BLOG POSTS --
     match /posts/{postId} {
-      allow get: if existing().status == 'published' || isAdmin();
+      allow get: if (existing().status == 'published' || isAdmin()) && isValidId(postId);
       allow list: if resource.data.status == 'published' || isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() && isValidBlogPost(incoming());
+      allow update: if isAdmin() && isValidBlogPost(incoming());
+      allow delete: if isAdmin();
     }
 
     // -- LEADS --
     match /leads/{leadId} {
-      allow create: if true; // Open submission
+      allow create: if isValidLead(incoming()) && isValidId(leadId);
       allow read, update, delete: if isAdmin();
     }
   }

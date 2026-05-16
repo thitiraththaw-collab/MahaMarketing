@@ -11,7 +11,7 @@ import BlogPostPage from './pages/BlogPostPage';
 import BlogAdminPage from './pages/BlogAdminPage';
 import LoginPage from './pages/LoginPage';
 import PriceCalculator from './components/PriceCalculator';
-import { db, auth } from './lib/firebase';
+import { db, auth, handleFirestoreError, OperationType } from './lib/firebase';
 import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -163,21 +163,20 @@ export default function App() {
   const [prefilledMessage, setPrefilledMessage] = useState<string>('');
 
   useEffect(() => {
+    const path = 'site/content';
     // Real-time sync with Firestore for site content
     const unsub = onSnapshot(doc(db, 'site', 'content'), (snap) => {
       if (snap.exists()) {
         setContent(snap.data() as SiteContent);
       } else {
-        // Initialize if empty (will only work if admin or if rules allow init)
-        // Note: First user might not be admin, so this might fail if rules are strict.
-        // But for this turn, I'll assume it works or I'll manually seed if needed.
+        // Initialize if empty
         setDoc(doc(db, 'site', 'content'), { ...DEFAULT_CONTENT, updatedAt: serverTimestamp() }).catch(e => {
           console.warn('Initial content creation failed (likely permissions), using default.', e);
         });
       }
       setLoading(false);
     }, (error) => {
-      console.error('Core sync failed:', error);
+      handleFirestoreError(error, OperationType.LIST, path);
       setLoading(false);
     });
 

@@ -1,10 +1,10 @@
 {
-  "projectId": "inner-charger-5cf5x",
-  "appId": "1:628677266931:web:8e0636c0f1050f6a9d9686",
-  "apiKey": "AIzaSyBqYqjHLfWgBIHWZq6xezyfqX7JFrzn2_M",
-  "authDomain": "inner-charger-5cf5x.firebaseapp.com",
+  "projectId": "maha-marketing",
+  "appId": "1:104655487594:web:b5bca25cac2621b38ac013",
+  "apiKey": "AIzaSyCyU0f5rt9mQ9xj1B7QneESnD25olbf3bk",
+  "authDomain": "maha-marketing.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-6379c505-fe26-4a86-9bc8-9ecf1206bf4b",
-  "storageBucket": "inner-charger-5cf5x.firebasestorage.app",
-  "messagingSenderId": "628677266931",
+  "storageBucket": "maha-marketing.firebasestorage.app",
+  "messagingSenderId": "104655487594",
   "measurementId": ""
 }
