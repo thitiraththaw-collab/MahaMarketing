@@ -16,7 +16,9 @@ export default function BlogAdminPage() {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [search, setSearch] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -31,7 +33,7 @@ export default function BlogAdminPage() {
 
   const handleNewPost = () => {
     const newPost: BlogPost = {
-      id: Date.now().toString(),
+      id: `post-${Date.now()}`,
       title: 'New Article',
       excerpt: 'Brief summary of the article...',
       content: '<p>Start writing here...</p>',
@@ -45,7 +47,8 @@ export default function BlogAdminPage() {
       createdAt: new Date().toISOString()
     };
     setSelectedPost(newPost);
-    setPosts([newPost, ...posts]);
+    setPosts(prev => [newPost, ...prev]);
+    setIsDirty(true);
   };
 
   const handleSave = async () => {
@@ -58,16 +61,19 @@ export default function BlogAdminPage() {
          updatedPost.content = editorRef.current.innerHTML;
       }
       
+      // Update local state immediately for better responsiveness
+      setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
+      
       await blogService.savePost(updatedPost);
-      const list = await blogService.getPosts(true);
-      setPosts(list);
       setSaveStatus('saved');
+      setIsDirty(false);
     } catch (error) {
       console.error('Save failed:', error);
       setSaveStatus('idle');
+      alert('บันทึกไม่สำเร็จ: ' + (error instanceof Error ? error.message : 'Unknown error'));
       // Already handled in handleFirestoreError which rethrows
     }
-    setTimeout(() => setSaveStatus('idle'), 2000);
+    setTimeout(() => setSaveStatus('idle'), 3000);
   };
 
   const handleDelete = async () => {
@@ -139,12 +145,18 @@ export default function BlogAdminPage() {
   };
 
   const handleContentChange = () => {
-    if (editorRef.current && selectedPost) {
-      const newContent = editorRef.current.innerHTML;
-      if (newContent !== selectedPost.content) {
-        setSelectedPost({ ...selectedPost, content: newContent });
+    if (!editorRef.current || !selectedPost) return;
+    
+    setIsDirty(true);
+    
+    // Debounce state update for performance
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      if (editorRef.current && selectedPost) {
+        const newContent = editorRef.current.innerHTML;
+        setSelectedPost(prev => prev ? { ...prev, content: newContent } : null);
       }
-    }
+    }, 500);
   };
 
   const wordCount = selectedPost?.content ? selectedPost.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0;
@@ -205,17 +217,32 @@ export default function BlogAdminPage() {
     const file = e.target.files?.[0];
     if (!file || !selectedPost) return;
 
+    // Optional: Add size check
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File is too large (max 2MB)');
+      return;
+    }
+
     try {
+      setSaveStatus('saving');
       const base64 = await fileToBase64(file);
+      let updatedPost = { ...selectedPost };
+
       if (type === 'author') {
-        setSelectedPost({ ...selectedPost, authorImageUrl: base64 });
+        updatedPost = { ...updatedPost, authorImageUrl: base64 };
       } else if (type === 'cover') {
-        setSelectedPost({ ...selectedPost, coverUrl: base64 });
+        updatedPost = { ...updatedPost, coverUrl: base64 };
       } else if (type === 'editor') {
         execCommand('insertImage', base64);
+        // updatedPost.content will be updated by handleContentChange
       }
+      
+      setSelectedPost(updatedPost);
+      setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
+      setSaveStatus('idle');
     } catch (error) {
       console.error('Upload failed:', error);
+      setSaveStatus('idle');
     }
     // Reset input
     e.target.value = '';
